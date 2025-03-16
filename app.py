@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
-from ising_simulation import simulate
-from syk_simulation import (
+from ising.ising_simulation import simulate
+from syk.syk_simulation import (
     calculate_entropy,
     calculate_otoc,
     calculate_specific_heat,

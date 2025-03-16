@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # 1. Define system parameters and helper functions
 ###############################################################################
 # Clock parameters
-D_clock = 10  # Number of clock states
+D_clock = 100  # Number of clock states
 
 # Basic operators
 sigma_z = np.array([[1, 0], [0, -1]], dtype=complex)
