@@ -4,9 +4,9 @@ from scipy.linalg import expm
 import matplotlib.pyplot as plt
 
 ###############################################################################
-# 1. Define a larger discrete clock register for finer time resolution
+# 1. Define a shorter discrete clock register
 ###############################################################################
-D_clock = 20  # Increased clock states for smoother evolution
+D_clock = 10  # Reduced clock states to see early-time dynamics
 clock_basis = np.eye(D_clock, dtype=complex)
 
 ###############################################################################
@@ -23,8 +23,8 @@ I2 = np.eye(2, dtype=complex)
 # Build expanded Hamiltonian including environment
 omega = 1.0    # system energy scale
 g = 0.5        # system-system interaction
-g_env1 = 0.15  # first qubit-environment coupling
-g_env2 = 0.1   # second qubit-environment coupling
+g_env1 = 0.02  # first qubit-environment coupling (reduced)
+g_env2 = 0.01  # second qubit-environment coupling (reduced)
 
 # Helper function for 4-qubit operators
 def four_qubit_op(op1, op2, op3, op4):
@@ -36,11 +36,11 @@ H_1 = four_qubit_op(sigma_z, I2, I2, I2)  # σz on first qubit
 H_2 = four_qubit_op(I2, sigma_z, I2, I2)  # σz on second qubit
 H_int = g * four_qubit_op(sigma_x, sigma_x, I2, I2)  # interaction between system qubits
 
-# Environment coupling (asymmetric)
-# First system qubit couples to first environment qubit
-H_env1 = g_env1 * four_qubit_op(sigma_z, I2, sigma_z, I2)
-# Second system qubit couples to second environment qubit
-H_env2 = g_env2 * four_qubit_op(I2, sigma_z, I2, sigma_z)
+# Environment coupling (σx-type instead of σz-type)
+# First system qubit couples to first environment qubit via σx⊗σx
+H_env1 = g_env1 * four_qubit_op(sigma_x, I2, sigma_x, I2)
+# Second system qubit couples to second environment qubit via σx⊗σx
+H_env2 = g_env2 * four_qubit_op(I2, sigma_x, I2, sigma_x)
 
 # Total Hamiltonian
 H_sys = omega * (H_1 + H_2) + H_int + H_env1 + H_env2
@@ -84,6 +84,8 @@ exp_values_Z1 = []  # First system qubit
 exp_values_Z2 = []  # Second system qubit
 coherence1 = []     # First qubit coherence
 coherence2 = []     # Second qubit coherence
+purity1 = []        # Purity of first qubit (Tr(ρ²))
+purity2 = []        # Purity of second qubit (Tr(ρ²))
 
 # Observables for system qubits
 Z1 = four_qubit_op(sigma_z, I2, I2, I2)
@@ -134,11 +136,15 @@ for T in range(D_clock):
     rho_2 = partial_trace_to_qubit(rho_full, 1)
     coherence1.append(np.abs(rho_1[0,1]))
     coherence2.append(np.abs(rho_2[0,1]))
+    
+    # Calculate purity (Tr(ρ²)) for each qubit
+    purity1.append(np.real_if_close(np.trace(rho_1 @ rho_1)))
+    purity2.append(np.real_if_close(np.trace(rho_2 @ rho_2)))
 
 ###############################################################################
 # 6. Enhanced visualization
 ###############################################################################
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12))
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 16))
 
 # Clock probabilities
 ax1.bar(range(D_clock), clock_probs)
@@ -165,6 +171,15 @@ ax3.set_title('Qubit Coherences vs Clock Time')
 ax3.grid(True)
 ax3.legend()
 
+# Purity
+ax4.plot(T_values, purity1, 'b-o', label='Tr(ρ²) (qubit 1)', markersize=4)
+ax4.plot(T_values, purity2, 'r-o', label='Tr(ρ²) (qubit 2)', markersize=4)
+ax4.set_xlabel('Clock Time T')
+ax4.set_ylabel('Purity')
+ax4.set_title('Qubit Purity vs Clock Time')
+ax4.grid(True)
+ax4.legend()
+
 plt.tight_layout()
 plt.show()
 
@@ -177,3 +192,5 @@ for T in [0, D_clock//4, D_clock//2, 3*D_clock//4, D_clock-1]:
     print(f"⟨I⊗σz⊗I⊗I⟩ = {exp_values_Z2[T]:.4f}")
     print(f"Coherence 1 = {coherence1[T]:.4f}")
     print(f"Coherence 2 = {coherence2[T]:.4f}")
+    print(f"Purity 1 = {purity1[T]:.4f}")
+    print(f"Purity 2 = {purity2[T]:.4f}")
