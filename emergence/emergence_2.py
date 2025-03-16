@@ -10,10 +10,10 @@ D_clock = 20  # Increased clock states for smoother evolution
 clock_basis = np.eye(D_clock, dtype=complex)
 
 ###############################################################################
-# 2. Define system + environment: three qubits total
+# 2. Define system + environment: four qubits total (2 system + 2 environment)
 ###############################################################################
-# Now dim=8 for 3 qubits (2 system + 1 environment)
-dim_system = 8
+# Now dim=16 for 4 qubits (2 system + 2 environment)
+dim_system = 16
 
 # Basic operators
 sigma_z = np.array([[1, 0], [0, -1]], dtype=complex)
@@ -23,34 +23,41 @@ I2 = np.eye(2, dtype=complex)
 # Build expanded Hamiltonian including environment
 omega = 1.0    # system energy scale
 g = 0.5        # system-system interaction
-g_env = 0.3    # system-environment interaction
+g_env1 = 0.15  # first qubit-environment coupling
+g_env2 = 0.1   # second qubit-environment coupling
+
+# Helper function for 4-qubit operators
+def four_qubit_op(op1, op2, op3, op4):
+    """Create a 4-qubit operator from single-qubit operators."""
+    return kron(kron(kron(op1, op2), op3), op4)
 
 # System terms (first two qubits)
-H_1 = kron(kron(sigma_z, I2), I2)  # σz on first qubit
-H_2 = kron(kron(I2, sigma_z), I2)  # σz on second qubit
-H_int = g * kron(kron(sigma_x, sigma_x), I2)  # interaction between system qubits
+H_1 = four_qubit_op(sigma_z, I2, I2, I2)  # σz on first qubit
+H_2 = four_qubit_op(I2, sigma_z, I2, I2)  # σz on second qubit
+H_int = g * four_qubit_op(sigma_x, sigma_x, I2, I2)  # interaction between system qubits
 
-# Environment coupling (third qubit)
-H_env = kron(kron(sigma_z, I2), sigma_z)  # coupling first qubit to environment
-H_env += kron(kron(I2, sigma_z), sigma_z)  # coupling second qubit to environment
-H_env *= g_env
+# Environment coupling (asymmetric)
+# First system qubit couples to first environment qubit
+H_env1 = g_env1 * four_qubit_op(sigma_z, I2, sigma_z, I2)
+# Second system qubit couples to second environment qubit
+H_env2 = g_env2 * four_qubit_op(I2, sigma_z, I2, sigma_z)
 
 # Total Hamiltonian
-H_sys = omega * (H_1 + H_2) + H_int + H_env
+H_sys = omega * (H_1 + H_2) + H_int + H_env1 + H_env2
 
 # Time evolution operator (smaller dt for finer resolution)
 dt = 0.2
 U = expm(-1j * H_sys * dt)
 
 ###############################################################################
-# 3. Initial state: system in superposition, environment in |0>
+# 3. Initial state: system in superposition, environments in |0>
 ###############################################################################
 plus = (1.0/np.sqrt(2))*np.array([1, 1], dtype=complex)
 zero = np.array([1, 0], dtype=complex)
 
-# Two system qubits in |+>, environment in |0>
+# Two system qubits in |+>, two environment qubits in |0>
 psi0_sys = kron(plus, plus)  # system qubits
-psi0_total = kron(psi0_sys, zero)  # add environment
+psi0_total = kron(kron(psi0_sys, zero), zero)  # add two environment qubits
 psi0_total /= np.linalg.norm(psi0_total)
 
 ###############################################################################
@@ -75,31 +82,34 @@ Psi_global_reshaped = np.reshape(Psi_global, (D_clock, dim_system))
 clock_probs = []
 exp_values_Z1 = []  # First system qubit
 exp_values_Z2 = []  # Second system qubit
-coherence = []      # Off-diagonal element of reduced density matrix
+coherence1 = []     # First qubit coherence
+coherence2 = []     # Second qubit coherence
 
-# Observables for first two qubits
-Z1 = kron(kron(sigma_z, I2), I2)
-Z2 = kron(kron(I2, sigma_z), I2)
+# Observables for system qubits
+Z1 = four_qubit_op(sigma_z, I2, I2, I2)
+Z2 = four_qubit_op(I2, sigma_z, I2, I2)
 
 def partial_trace_to_qubit(rho_full, keep_qubit):
     """Extract single-qubit density matrix by tracing out others.
     
     Args:
-        rho_full: 8x8 density matrix for 3 qubits
-        keep_qubit: Which qubit to keep (0, 1, or 2)
+        rho_full: 16x16 density matrix for 4 qubits
+        keep_qubit: Which qubit to keep (0-3)
     
     Returns:
         2x2 reduced density matrix for the specified qubit
     """
-    # Reshape the 8x8 matrix into 2x2x2 x 2x2x2 form
-    rho_reshaped = rho_full.reshape([2,2,2, 2,2,2])
+    # Reshape the 16x16 matrix into 2x2x2x2 x 2x2x2x2 form
+    rho_reshaped = rho_full.reshape([2,2,2,2, 2,2,2,2])
     
     if keep_qubit == 0:  # Keep first qubit
-        return np.trace(np.trace(rho_reshaped, axis1=1, axis2=4), axis1=1, axis2=2)
+        return np.trace(np.trace(np.trace(rho_reshaped, 
+            axis1=1, axis2=5), axis1=1, axis2=3), axis1=1, axis2=2)
     elif keep_qubit == 1:  # Keep second qubit
-        return np.trace(np.trace(rho_reshaped, axis1=0, axis2=3), axis1=1, axis2=2)
-    else:  # Keep third qubit
-        return np.trace(np.trace(rho_reshaped, axis1=0, axis2=3), axis1=0, axis2=1)
+        return np.trace(np.trace(np.trace(rho_reshaped, 
+            axis1=0, axis2=4), axis1=1, axis2=3), axis1=1, axis2=2)
+    else:
+        raise ValueError("Only implemented for system qubits 0 and 1")
 
 for T in range(D_clock):
     # Get system state for this clock time
@@ -119,9 +129,11 @@ for T in range(D_clock):
     exp_values_Z1.append(np.real_if_close(np.trace(rho_full @ Z1)))
     exp_values_Z2.append(np.real_if_close(np.trace(rho_full @ Z2)))
     
-    # Get reduced density matrix of first qubit and measure coherence
+    # Get reduced density matrices and measure coherence
     rho_1 = partial_trace_to_qubit(rho_full, 0)
-    coherence.append(np.abs(rho_1[0,1]))
+    rho_2 = partial_trace_to_qubit(rho_full, 1)
+    coherence1.append(np.abs(rho_1[0,1]))
+    coherence2.append(np.abs(rho_2[0,1]))
 
 ###############################################################################
 # 6. Enhanced visualization
@@ -136,8 +148,8 @@ ax1.set_title('Clock State Probabilities')
 
 # System observables
 T_values = np.arange(D_clock)
-ax2.plot(T_values, exp_values_Z1, 'b-o', label='⟨σz⊗I⊗I⟩', markersize=4)
-ax2.plot(T_values, exp_values_Z2, 'r-o', label='⟨I⊗σz⊗I⟩', markersize=4)
+ax2.plot(T_values, exp_values_Z1, 'b-o', label='⟨σz⊗I⊗I⊗I⟩', markersize=4)
+ax2.plot(T_values, exp_values_Z2, 'r-o', label='⟨I⊗σz⊗I⊗I⟩', markersize=4)
 ax2.set_xlabel('Clock Time T')
 ax2.set_ylabel('Expectation Value')
 ax2.set_title('System Observables vs Clock Time')
@@ -145,10 +157,11 @@ ax2.legend()
 ax2.grid(True)
 
 # Coherence decay
-ax3.plot(T_values, coherence, 'g-o', label='|ρ01|', markersize=4)
+ax3.plot(T_values, coherence1, 'b-o', label='|ρ01| (qubit 1)', markersize=4)
+ax3.plot(T_values, coherence2, 'r-o', label='|ρ01| (qubit 2)', markersize=4)
 ax3.set_xlabel('Clock Time T')
 ax3.set_ylabel('Coherence')
-ax3.set_title('First Qubit Coherence vs Clock Time')
+ax3.set_title('Qubit Coherences vs Clock Time')
 ax3.grid(True)
 ax3.legend()
 
@@ -160,6 +173,7 @@ print("\nSelected measurements at different clock times:")
 for T in [0, D_clock//4, D_clock//2, 3*D_clock//4, D_clock-1]:
     print(f"\nT = {T}:")
     print(f"P(T) = {clock_probs[T]:.4f}")
-    print(f"⟨σz⊗I⊗I⟩ = {exp_values_Z1[T]:.4f}")
-    print(f"⟨I⊗σz⊗I⟩ = {exp_values_Z2[T]:.4f}")
-    print(f"Coherence = {coherence[T]:.4f}")
+    print(f"⟨σz⊗I⊗I⊗I⟩ = {exp_values_Z1[T]:.4f}")
+    print(f"⟨I⊗σz⊗I⊗I⟩ = {exp_values_Z2[T]:.4f}")
+    print(f"Coherence 1 = {coherence1[T]:.4f}")
+    print(f"Coherence 2 = {coherence2[T]:.4f}")
