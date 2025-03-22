@@ -10,7 +10,7 @@ This package provides tools for exploring quantum dynamics in systems where time
 
 ```bash
 # Clone the repository
-git clone https://github.com/quantum-matter/emergence.git
+git clone https://github.com/marcoloco23/quantum.git
 cd emergence
 
 # Install dependencies
@@ -75,8 +75,8 @@ simulator = QuantumSimulator(config)
 results = simulator.run_simulation()
 
 # Access results
-print(f"Final coherence: {results['coherence'][-1]}")
-print(f"Final purity: {results['purity'][-1]}")
+print(f"Final coherence: {results['coherence1'][-1]}")
+print(f"Final purity: {results['purity1'][-1]}")
 ```
 
 ### Running Analyses from Command Line
@@ -89,13 +89,13 @@ python -m emergence.main sweep --coupling-type xx --min-coupling 0.0 --max-coupl
 python -m emergence.main compare --coupling-strength 0.3
 
 # Run advanced analysis (frequency and recurrence)
-python -m emergence.main advanced --coupling-strength 0.3
+python -m emergence.main advanced --coupling-strength 0.05
 
 # Analyze different initial states
-python -m emergence.main initial --coupling-strength 0.3
+python -m emergence.main initial --coupling-strength 0.05
 
 # Analyze environment scaling effects
-python -m emergence.main env-scaling --max-size 6 --coupling-type xx
+python -m emergence.main env-scaling --max-size 4 --coupling-type xx
 ```
 
 ## Key Concepts
@@ -118,19 +118,14 @@ Decoherence is a quantum phenomenon where a system loses its quantum coherence d
 
 This package allows exploration of how these metrics evolve under different coupling conditions.
 
-## Citation
+## Related Components
 
-If you use this package in your research, please cite:
+This package is part of a larger quantum simulation framework that includes:
+- **Ising model simulations**: Classical and quantum Ising models for studying phase transitions
+- **SYK model simulations**: Sachdev-Ye-Kitaev model for exploring quantum chaos
+- **Web interface**: Interactive visualization and parameter exploration
 
-```
-@software{quantum_emergence,
-  author = {{Quantum Matter Research Group}},
-  title = {Quantum Emergence: A Python Package for Emergent Time Simulations},
-  url = {https://github.com/quantum-matter/emergence},
-  version = {1.0.0},
-  year = {2023},
-}
-```
+See the main repository README for more information on these components.
 
 ## License
 

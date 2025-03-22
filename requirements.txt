@@ -1,0 +1,27 @@
+# Core dependencies
+numpy>=1.20.0
+scipy>=1.7.0
+matplotlib>=3.5.0
+typing_extensions>=4.0.0
+argparse>=1.4.0
+tqdm>=4.62.0
+
+# UI dependencies
+PyQt5>=5.15.0; platform_system != "Darwin"
+PyQt5>=5.15.0; platform_system == "Darwin" and platform_machine != "arm64"
+PyQt6>=6.2.0; platform_system == "Darwin" and platform_machine == "arm64"
+
+# Web interface dependencies
+streamlit>=1.10.0
+plotly>=5.5.0
+
+# Notebook dependencies
+jupyter>=1.0.0
+ipywidgets>=7.7.0
+ipympl>=0.9.0
+
+# Development dependencies
+pytest>=7.0.0
+black>=22.3.0
+flake8>=4.0.0
+mypy>=0.950 

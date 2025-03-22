@@ -34,12 +34,11 @@ env/
 .DS_Store
 
 # Project specific
-images/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.pdf
+/images/*.png
+/images/*.jpg
+/images/*.jpeg
+/images/*.gif
+/images/*.pdf
 *.log
 .coverage
 htmlcov/
@@ -48,7 +47,20 @@ htmlcov/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
+# Keep the example notebooks
+# *.ipynb
 
 # OS specific
-Thumbs.db 
+Thumbs.db
+
+# Data files
+*.npy
+*.npz
+*.h5
+*.pkl
+*.dat
+
+# Generated results
+/results/
+/outputs/
+/runs/ 
