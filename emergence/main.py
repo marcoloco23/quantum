@@ -7,24 +7,25 @@ import os
 import sys
 from typing import Dict, List, Tuple, Optional, Any
 
-from quantum_core import sigma_x, sigma_z, I2, zero, plus, bell_plus
-from quantum_simulator import (
+from .quantum_core import sigma_x, sigma_z, I2, zero, plus, bell_plus
+from .quantum_simulator import (
     SystemConfiguration,
     QuantumSimulator,
     run_simulation_with_custom_state,
     run_simulation_with_env_size,
 )
-from analysis import (
+from .analysis import (
     analyze_frequency_components,
     analyze_recurrence_dynamics,
     analyze_parameter_sweep,
 )
-from visualization import (
+from .visualization import (
     setup_image_path,
     plot_simulation_results,
     plot_coupling_strength_sweep,
     plot_coupling_type_comparison,
     plot_frequency_analysis,
+    plot_recurrence_analysis,
 )
 
 """
@@ -53,19 +54,31 @@ def create_parser() -> argparse.ArgumentParser:
     )
     sweep_parser.add_argument(
         "--coupling-type",
-        type=str,
+        type=str.lower,
         default="xx",
         choices=["xx", "zz", "mixed"],
-        help="Type of system-environment coupling",
+        help="Type of system-environment coupling (case-insensitive)",
     )
     sweep_parser.add_argument(
-        "--min-g", type=float, default=0.0, help="Minimum coupling strength"
+        "--min-coupling",
+        dest="min_g",
+        type=float,
+        default=0.0,
+        help="Minimum coupling strength",
     )
     sweep_parser.add_argument(
-        "--max-g", type=float, default=0.25, help="Maximum coupling strength"
+        "--max-coupling",
+        dest="max_g",
+        type=float,
+        default=0.25,
+        help="Maximum coupling strength",
     )
     sweep_parser.add_argument(
-        "--n-points", type=int, default=6, help="Number of coupling strength points"
+        "--num-points",
+        dest="n_points",
+        type=int,
+        default=6,
+        help="Number of coupling strength points",
     )
 
     # 2. Compare coupling types
@@ -73,7 +86,11 @@ def create_parser() -> argparse.ArgumentParser:
         "compare", help="Compare different coupling types"
     )
     compare_parser.add_argument(
-        "--g-env", type=float, default=0.05, help="Environment coupling strength"
+        "--coupling-strength",
+        dest="g_env",
+        type=float,
+        default=0.05,
+        help="Environment coupling strength",
     )
 
     # 3. Advanced analysis
@@ -81,13 +98,21 @@ def create_parser() -> argparse.ArgumentParser:
         "advanced", help="Advanced analysis (frequency/recurrence)"
     )
     advanced_parser.add_argument(
-        "--g-env", type=float, default=0.05, help="Environment coupling strength"
+        "--coupling-strength",
+        dest="g_env",
+        type=float,
+        default=0.05,
+        help="Environment coupling strength",
     )
 
     # 4. Initial state analysis
     initial_parser = subparsers.add_parser("initial", help="Initial state analysis")
     initial_parser.add_argument(
-        "--g-env", type=float, default=0.05, help="Environment coupling strength"
+        "--coupling-strength",
+        dest="g_env",
+        type=float,
+        default=0.05,
+        help="Environment coupling strength",
     )
 
     # 5. Environment size scaling
@@ -95,19 +120,25 @@ def create_parser() -> argparse.ArgumentParser:
         "env-scaling", help="Environment size scaling analysis"
     )
     env_parser.add_argument(
-        "--max-size", type=int, default=4, help="Maximum number of environment qubits"
+        "--max-size",
+        type=int,
+        default=4,
+        help="Maximum number of environment qubits",
     )
     env_parser.add_argument(
         "--coupling-type",
-        type=str,
+        type=str.lower,
         default="xx",
         choices=["xx", "zz"],
-        help="Type of system-environment coupling",
+        help="Type of system-environment coupling (case-insensitive)",
     )
 
     # General options
     parser.add_argument(
-        "--clock-states", type=int, default=100, help="Number of clock states"
+        "--clock-states",
+        type=int,
+        default=100,
+        help="Number of clock states",
     )
     parser.add_argument(
         "--no-plots",
@@ -115,7 +146,10 @@ def create_parser() -> argparse.ArgumentParser:
         help="Do not display plots (save to file only)",
     )
     parser.add_argument(
-        "--output-dir", type=str, default="images", help="Output directory for plots"
+        "--output-dir",
+        type=str,
+        default="images",
+        help="Output directory for plots",
     )
 
     return parser
@@ -288,6 +322,11 @@ def run_advanced_analysis(args):
     print("  Analyzing recurrence dynamics...")
     recurrence_info = analyze_recurrence_dynamics(results_xx, results_zz, results_mixed)
 
+    # Plot recurrence analysis
+    plot_recurrence_analysis(
+        recurrence_info, save_path="recurrence_analysis.png", show=not args.no_plots
+    )
+
     # Print recurrence times
     print("Recurrence analysis results:")
     print(
@@ -301,7 +340,7 @@ def run_advanced_analysis(args):
     )
 
     print(
-        f"Advanced analysis complete. Results saved to '{setup_image_path('frequency_analysis.png')}'"
+        f"Advanced analysis complete. Results saved to '{setup_image_path('frequency_analysis.png')}' and '{setup_image_path('recurrence_analysis.png')}'"
     )
 
     return freq_results, recurrence_info
@@ -515,9 +554,21 @@ def run_environment_scaling(args):
 
     for i, n_env in enumerate(env_sizes):
         color_idx = i % len(colors)
+        # Extract purity values - system_purity is an array of matrices
+        # Calculate the trace of rho^2 for each time step
+        purity_values = []
+        for rho in results_dict[n_env]["system_purity"]:
+            if isinstance(rho, np.ndarray) and rho.ndim == 2:
+                # It's a density matrix, calculate Tr(rho^2)
+                purity_val = np.trace(rho @ rho).real
+            else:
+                # It's already a scalar value
+                purity_val = float(rho)
+            purity_values.append(purity_val)
+
         ax2.plot(
             T_values,
-            results_dict[n_env]["system_purity"],
+            purity_values,
             color=colors[color_idx],
             linestyle="-",
             label=f"{n_env} Env. Qubits",

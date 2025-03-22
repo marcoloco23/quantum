@@ -508,3 +508,113 @@ def plot_frequency_analysis(
         plt.show()
     else:
         plt.close(fig)
+
+
+def plot_recurrence_analysis(
+    recurrence_info: Dict[str, Any],
+    save_path: Optional[str] = None,
+    show: bool = True,
+):
+    """Plot recurrence analysis results including autocorrelations and distance matrices.
+
+    Args:
+        recurrence_info: Dictionary of recurrence analysis results
+        save_path: Path for saving figure
+        show: Whether to show the figure
+    """
+    # Extract autocorrelation data
+    autocorr = recurrence_info["autocorrelation"]
+    dist_matrices = recurrence_info["distance_matrices"]
+
+    # Create figure with 3x2 subplots
+    fig, axes = plt.subplots(3, 2, figsize=(15, 12))
+
+    # Plot lag values for autocorrelation
+    lag_values = np.arange(len(autocorr["coherence"]["xx"]))
+
+    # 1. Coherence Auto-correlation
+    ax1 = axes[0, 0]
+    ax1.plot(lag_values, autocorr["coherence"]["xx"], "b-", label="XX Coupling")
+    if "mixed" in autocorr["coherence"]:
+        ax1.plot(
+            lag_values, autocorr["coherence"]["mixed"], "g-", label="Mixed Coupling"
+        )
+    ax1.set_xlabel("Lag (Clock Steps)")
+    ax1.set_ylabel("Auto-correlation")
+    ax1.set_title("Coherence Auto-correlation")
+    ax1.grid(True)
+    ax1.legend()
+
+    # 2. Purity Auto-correlation
+    ax2 = axes[1, 0]
+    ax2.plot(lag_values, autocorr["purity"]["xx"], "b-", label="XX Coupling")
+    ax2.plot(lag_values, autocorr["purity"]["zz"], "r-", label="ZZ Coupling")
+    if "mixed" in autocorr["purity"]:
+        ax2.plot(lag_values, autocorr["purity"]["mixed"], "g-", label="Mixed Coupling")
+    ax2.set_xlabel("Lag (Clock Steps)")
+    ax2.set_ylabel("Auto-correlation")
+    ax2.set_title("Purity Auto-correlation")
+    ax2.grid(True)
+    ax2.legend()
+
+    # 3. Entropy Auto-correlation
+    ax3 = axes[2, 0]
+    ax3.plot(lag_values, autocorr["entropy"]["xx"], "b-", label="XX Coupling")
+    ax3.plot(lag_values, autocorr["entropy"]["zz"], "r-", label="ZZ Coupling")
+    if "mixed" in autocorr["entropy"]:
+        ax3.plot(lag_values, autocorr["entropy"]["mixed"], "g-", label="Mixed Coupling")
+    ax3.set_xlabel("Lag (Clock Steps)")
+    ax3.set_ylabel("Auto-correlation")
+    ax3.set_title("Entropy Auto-correlation")
+    ax3.grid(True)
+    ax3.legend()
+
+    # 4. Coherence Distance Matrix
+    ax4 = axes[0, 1]
+    n = len(dist_matrices["coherence_xx"])
+    im4 = ax4.imshow(
+        dist_matrices["coherence_xx"],
+        origin="lower",
+        cmap="viridis",
+        extent=[0, n, 0, n],
+    )
+    ax4.set_xlabel("Clock Time T")
+    ax4.set_ylabel("Clock Time T")
+    ax4.set_title("Coherence Distance Matrix (XX Coupling)")
+    fig.colorbar(im4, ax=ax4)
+
+    # 5. Purity Distance Matrix
+    ax5 = axes[1, 1]
+    im5 = ax5.imshow(
+        dist_matrices["purity_xx"],
+        origin="lower",
+        cmap="viridis",
+        extent=[0, n, 0, n],
+    )
+    ax5.set_xlabel("Clock Time T")
+    ax5.set_ylabel("Clock Time T")
+    ax5.set_title("Purity Distance Matrix (XX Coupling)")
+    fig.colorbar(im5, ax=ax5)
+
+    # 6. Entropy Distance Matrix
+    ax6 = axes[2, 1]
+    im6 = ax6.imshow(
+        dist_matrices["entropy_xx"],
+        origin="lower",
+        cmap="viridis",
+        extent=[0, n, 0, n],
+    )
+    ax6.set_xlabel("Clock Time T")
+    ax6.set_ylabel("Clock Time T")
+    ax6.set_title("Entropy Distance Matrix (XX Coupling)")
+    fig.colorbar(im6, ax=ax6)
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(setup_image_path(save_path), dpi=300)
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)

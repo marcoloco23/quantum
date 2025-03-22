@@ -66,7 +66,7 @@ config = SystemConfiguration(
     env_coupling1=0.2,
     env_coupling2=0.2,
     time_step=0.1,
-    coupling_type="XX",
+    coupling_type="xx",  # Case-insensitive: "xx", "zz", or "mixed"
     num_env_qubits=2
 )
 
@@ -82,20 +82,20 @@ print(f"Final purity: {results['purity'][-1]}")
 ### Running Analyses from Command Line
 
 ```bash
-# Sweep coupling strengths (XX coupling)
-python -m emergence.main sweep --coupling-type XX --min-coupling 0.0 --max-coupling 1.0 --num-points 10
+# Sweep coupling strengths (coupling type is case-insensitive)
+python -m emergence.main sweep --coupling-type xx --min-coupling 0.0 --max-coupling 1.0 --num-points 10
 
 # Compare different coupling types
 python -m emergence.main compare --coupling-strength 0.3
 
 # Run advanced analysis (frequency and recurrence)
-python -m emergence.main advanced --coupling-strength 0.3 --coupling-type XX
+python -m emergence.main advanced --coupling-strength 0.3
 
 # Analyze different initial states
-python -m emergence.main initial --coupling-strength 0.3 --coupling-type XX
+python -m emergence.main initial --coupling-strength 0.3
 
 # Analyze environment scaling effects
-python -m emergence.main env-scaling --max-size 6 --coupling-type XX
+python -m emergence.main env-scaling --max-size 6 --coupling-type xx
 ```
 
 ## Key Concepts
