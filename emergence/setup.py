@@ -9,8 +9,8 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="quantum-emergence",
     version="1.0.0",
-    author="Quantum Matter Research Group",
-    author_email="contact@quantum-matter.example",
+    author="Marc Sperzel",
+    author_email="marcsperzel1@gmail.com",
     description="A package for simulating and analyzing quantum systems with emergent time",
     long_description=long_description,
     long_description_content_type="text/markdown",
