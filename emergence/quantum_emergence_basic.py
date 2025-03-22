@@ -6,14 +6,12 @@ import matplotlib.pyplot as plt
 ###############################################################################
 # 1. Define basic Pauli matrices and helpers
 ###############################################################################
-I2 = np.array([[1, 0],
-               [0, 1]], dtype=complex)
+I2 = np.array([[1, 0], [0, 1]], dtype=complex)
 
-sigma_x = np.array([[0, 1],
-                    [1, 0]], dtype=complex)
+sigma_x = np.array([[0, 1], [1, 0]], dtype=complex)
 
-sigma_z = np.array([[1, 0],
-                    [0,-1]], dtype=complex)
+sigma_z = np.array([[1, 0], [0, -1]], dtype=complex)
+
 
 def partial_trace(rho, subsystem=0):
     """
@@ -29,25 +27,27 @@ def partial_trace(rho, subsystem=0):
         np.ndarray: 2x2 density matrix of the remaining qubit.
     """
     # Reshape rho into (2,2,2,2)
-    rho_reshaped = np.reshape(rho, (2,2,2,2))
+    rho_reshaped = np.reshape(rho, (2, 2, 2, 2))
     if subsystem == 0:
         # Trace out the first qubit
-        return np.einsum('ijik->jk', rho_reshaped)
+        return np.einsum("ijik->jk", rho_reshaped)
     else:
         # Trace out the second qubit
-        return np.einsum('ijkj->ik', rho_reshaped)
+        return np.einsum("ijkj->ik", rho_reshaped)
+
 
 def density_matrix(state):
     """Given a state vector, return the density matrix |psi><psi|."""
     return np.outer(state, state.conjugate())
 
+
 ###############################################################################
 # 2. Build the total Hamiltonian for a 2-qubit system
 ###############################################################################
 # Parameters:
-omega_x = 1.0   # "energy scale" for the system qubit
-omega_y = 0.0   # "energy scale" for the environment qubit (set to 0 for demo)
-g       = 1.0   # interaction strength
+omega_x = 1.0  # "energy scale" for the system qubit
+omega_y = 0.0  # "energy scale" for the environment qubit (set to 0 for demo)
+g = 1.0  # interaction strength
 
 # H_x acts on qubit x only
 H_x = omega_x * sigma_z
@@ -71,10 +71,12 @@ dt = 0.05
 timesteps = int(t_final / dt)
 times = np.linspace(0, t_final, timesteps)
 
+
 # Time evolution operator for one small step dt:
 # U(dt) = exp(-i * H_total * dt / hbar). We set hbar=1 for simplicity.
 def time_evolution_operator(H, dt):
     return expm(-1j * H * dt)
+
 
 U_dt = time_evolution_operator(H_total, dt)
 
@@ -86,17 +88,17 @@ U_dt = time_evolution_operator(H_total, dt)
 
 # Basic computational basis states for a single qubit:
 zero = np.array([1, 0], dtype=complex)
-one  = np.array([0, 1], dtype=complex)
+one = np.array([0, 1], dtype=complex)
 
 # Build 2-qubit basis states:
 zero_zero = kron(zero, zero)  # |00>
-zero_one  = kron(zero, one)   # |01>
-one_zero  = kron(one, zero)   # |10>
-one_one   = kron(one, one)    # |11>
+zero_one = kron(zero, one)  # |01>
+one_zero = kron(one, zero)  # |10>
+one_one = kron(one, one)  # |11>
 
 # Example initial state: a superposition for qubit x, environment in |0>
 # psi(0) = (|0> + |1>) / sqrt(2) for x, and |0> for y
-psi_0 = (1.0/np.sqrt(2))*one + (0.0)*zero  # This is a superposition for x alone
+psi_0 = (1.0 / np.sqrt(2)) * one + (0.0) * zero  # This is a superposition for x alone
 # Combine it with environment y in |0>:
 psi_init = kron(psi_0, zero)
 
@@ -109,7 +111,7 @@ rho_init = density_matrix(psi_init)
 # 5. Simulation loop: evolve the state, compute partial trace over environment
 ###############################################################################
 rho_x_history = []
-pop_x_0 = []  # Probability to find x in |0> 
+pop_x_0 = []  # Probability to find x in |0>
 pop_x_1 = []  # Probability to find x in |1>
 
 rho = rho_init.copy()
@@ -120,7 +122,7 @@ for t in times:
 
     # Probabilities for x in |0> or |1>:
     p0 = np.real_if_close(np.dot(zero.conjugate(), rho_x.dot(zero)))
-    p1 = np.real_if_close(np.dot(one.conjugate(),  rho_x.dot(one)))
+    p1 = np.real_if_close(np.dot(one.conjugate(), rho_x.dot(one)))
     pop_x_0.append(p0)
     pop_x_1.append(p1)
 
@@ -133,10 +135,10 @@ rho_x_history = np.array(rho_x_history)
 # 6. Plot results
 ###############################################################################
 plt.figure()
-plt.plot(times, pop_x_0, label='P(x=0)')
-plt.plot(times, pop_x_1, label='P(x=1)')
-plt.xlabel('Time')
-plt.ylabel('Population of qubit x')
+plt.plot(times, pop_x_0, label="P(x=0)")
+plt.plot(times, pop_x_1, label="P(x=1)")
+plt.xlabel("Time")
+plt.ylabel("Population of qubit x")
 plt.legend()
-plt.title('System Qubit Populations Over Time')
+plt.title("System Qubit Populations Over Time")
 plt.show()
