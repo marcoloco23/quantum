@@ -31,21 +31,24 @@ env/
 .vscode/
 *.swp
 *.swo
-.project
-.pydevproject
-.settings/
-
-# Jupyter Notebook
-.ipynb_checkpoints
+.DS_Store
 
 # Project specific
 images/
-notes/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
 *.log
-*.pkl
-*.npy
-*.npz
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
 
 # OS specific
-.DS_Store
 Thumbs.db 
