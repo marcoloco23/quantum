@@ -6,7 +6,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = fh.read().splitlines()
     # Filter out comments and platform-specific dependencies
-    requirements = [req for req in requirements if not req.startswith('#') and ';' not in req]
+    requirements = [
+        req for req in requirements if not req.startswith("#") and ";" not in req
+    ]
 
 setup(
     name="quantum-matter",
@@ -37,4 +39,4 @@ setup(
             "quantum-app=app:main",
         ],
     },
-) 
+)

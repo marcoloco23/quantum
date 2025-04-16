@@ -12,25 +12,28 @@ from syk.syk_simulation import (
     run_multiple_syk_simulations,
 )
 
+
 def main():
     """Entry point for launching the Quantum Matter web application."""
     # This is needed for the console script entry point
     import os
     import sys
-    
+
     # Add the current directory to the path to ensure imports work correctly
     current_dir = os.path.dirname(os.path.abspath(__file__))
     if current_dir not in sys.path:
         sys.path.insert(0, current_dir)
-    
+
     # Streamlit CLI replaces the normal Python __main__ handling,
     # but this ensures the script can be run using either:
     # - streamlit run app.py
     # - python -m app
     # - quantum-app (console script)
     import streamlit.web.cli as stcli
+
     sys.argv = ["streamlit", "run", __file__, "--server.headless=true"]
     sys.exit(stcli.main())
+
 
 if __name__ == "__main__":
     # Set page configuration
@@ -50,7 +53,9 @@ if __name__ == "__main__":
     )
 
     if model == "3D Ising Model":
-        N = st.sidebar.number_input("Lattice size (N)", min_value=5, max_value=50, value=20)
+        N = st.sidebar.number_input(
+            "Lattice size (N)", min_value=5, max_value=50, value=20
+        )
         J = st.sidebar.number_input(
             "Interaction strength (J)", min_value=0.1, max_value=10.0, value=1.0
         )
@@ -176,13 +181,18 @@ if __name__ == "__main__":
             with col4:
                 st.pyplot(fig)
 
-
     elif model == "SYK Model":
         N = st.sidebar.slider("Number of Majorana fermions (N):", 4, 10, 4, step=2)
         T_values = np.linspace(0.1, 10, 100)
-        num_samples = st.sidebar.slider("Number of simulations for averaging:", 1, 100, 10)
+        num_samples = st.sidebar.slider(
+            "Number of simulations for averaging:", 1, 100, 10
+        )
         beta = st.sidebar.slider(
-            "Inverse temperature (beta)", min_value=0.1, max_value=10.0, value=1.0, step=0.1
+            "Inverse temperature (beta)",
+            min_value=0.1,
+            max_value=10.0,
+            value=1.0,
+            step=0.1,
         )
         J = st.sidebar.slider(
             "Coupling strength (J)", min_value=0.1, max_value=10.0, value=1.0, step=0.1
@@ -207,7 +217,8 @@ if __name__ == "__main__":
             )
 
             entropies_list = [
-                calculate_entropy(eigenvalues, T_values) for eigenvalues in eigenvalues_list
+                calculate_entropy(eigenvalues, T_values)
+                for eigenvalues in eigenvalues_list
             ]
             specific_heats_list = [
                 calculate_specific_heat(eigenvalues, T_values)
@@ -231,7 +242,9 @@ if __name__ == "__main__":
             st.write("Entropy vs. Temperature:")
             fig, ax = plt.subplots()
             ax.plot(T_values, average_entropy)
-            ax.set(xlabel="Temperature", ylabel="Entropy", title="Entropy vs. Temperature")
+            ax.set(
+                xlabel="Temperature", ylabel="Entropy", title="Entropy vs. Temperature"
+            )
             plt.close(fig)
             st.pyplot(fig)
 
