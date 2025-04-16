@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Tuple, Any
+from tqdm import tqdm
 
 
 # ---------- Helpers -------------------------------------------------
@@ -106,7 +107,7 @@ def reduced_density(psi: np.ndarray, L: int, N: int) -> np.ndarray:
 
 
 # ---------- Simulation Parameters ----------------------------------
-N: int = 10  # total qubits
+N: int = 12  # total qubits
 Ls: np.ndarray = np.arange(1, N)  # block sizes from 1 to N-1
 
 # Build the two "vacuum" states
@@ -115,15 +116,18 @@ psi_vol: np.ndarray = random_state(N)  # volume‑law (Haar random)
 
 
 def entropy_curve(psi: np.ndarray) -> List[float]:
-    """Compute the entanglement entropy curve S(L) for a given state psi."""
-    return [entanglement_entropy(reduced_density(psi, int(L), N)) for L in Ls]
+    """Compute the entanglement entropy curve S(L) for a given state psi, with progress bar."""
+    return [
+        entanglement_entropy(reduced_density(psi, int(L), N))
+        for L in tqdm(Ls, desc="Computing S(L)")
+    ]
 
 
 S_area: List[float] = entropy_curve(psi_area)
 S_vol: List[float] = entropy_curve(psi_vol)
 
 results: List[Tuple[int, List[float], np.ndarray]] = []
-for k in [1, 2, 3]:
+for k in tqdm([1, 2, 3], desc="Projecting qubits"):
     psi_mass: np.ndarray = project_qubits_zero(psi_vol, k, N)
     S_mass: List[float] = entropy_curve(psi_mass)
     deltaS: np.ndarray = np.array(S_vol) - np.array(S_mass)
